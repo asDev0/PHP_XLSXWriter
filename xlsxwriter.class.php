@@ -312,6 +312,9 @@ class XLSXWriter
 	protected function styleFontIndexes()
 	{
 		static $border_allowed = array('left','right','top','bottom');
+		static $border_style_allowed = array('thin', 'medium', 'thick', 'dotted', 'hair', 'dashed', 'mediumDashed',
+			'dashDot', 'mediumDashDot', 'dashDotDot', 'mediumDashDotDot', 'slantDashDot'
+		);
 		static $horizontal_allowed = array('general','left','right','justify','center');
 		static $vertical_allowed = array('bottom','center','distributed');
 		$default_font = array('size'=>'10','name'=>'Arial','family'=>'2');
@@ -329,9 +332,30 @@ class XLSXWriter
 			$style_indexes[$i] = array('num_fmt_idx'=>$number_format_idx);//initialize entry
 			if (isset($style['border']) && is_string($style['border']))
 			{
-				$border_input = explode(",", $style['border']);
-				sort($border_input);
-				$border_value = array_intersect($border_input, $border_allowed);
+				$border_value = array();
+				foreach (explode(",", $style['border']) as $border) {
+					$border_parts = explode('.', $border);
+					$border_side = $border_parts[0];
+					// process only allowed borders
+					if (in_array($border_side, $border_allowed) === true) {
+						$border_style = null;
+						$border_color = null; // default black
+						switch (count($border_parts)) {
+							case 2: $border_style = $border_parts[1]; break;
+							case 3:
+								$border_style = $border_parts[1];
+								$v = substr($border_parts[2],1,6);
+								$v = strlen($v)==3 ? $v[0].$v[0].$v[1].$v[1].$v[2].$v[2] : $v;// expand cf0 => ccff00
+								$border_color = "FF".strtoupper($v);
+								break;
+						}
+						// check allowed border styles
+						if (in_array($border_style, $border_style_allowed) === false) {
+							$border_style = 'hair';
+						}
+						$border_value[] = implode('.', [$border_side, $border_style, $border_color]);
+					}
+				}
 				$style_indexes[$i]['border_idx'] = self::add_to_list_get_index($borders, implode(",", $border_value) );
 			}
 			if (isset($style['fill']) && is_string($style['fill']) && $style['fill'][0]=='#')
@@ -441,13 +465,30 @@ class XLSXWriter
 		$file->write('<borders count="'.(count($borders)).'">');
         $file->write(    '<border diagonalDown="false" diagonalUp="false"><left/><right/><top/><bottom/><diagonal/></border>');
 		foreach($borders as $border) {
-			if (!empty($border)) { //fonts have an empty placeholder in the array to offset the static xml entry above
+			if (!empty($border)) { //borders have an empty placeholder in the array to offset the static xml entry above
 				$pieces = explode(",", $border);
 				$file->write('<border diagonalDown="false" diagonalUp="false">');
-				$file->write(  '<left'.(in_array('left',$pieces) ? ' style="hair"' : '').'/>');
-				$file->write(  '<right'.(in_array('right',$pieces) ? ' style="hair"' : '').'/>');
-				$file->write(  '<top'.(in_array('top',$pieces) ? ' style="hair"' : '').'/>');
-				$file->write(  '<bottom'.(in_array('bottom',$pieces) ? ' style="hair"' : '').'/>');
+				// process each side
+				foreach (['left', 'right', 'top', 'bottom'] as $bSide) {
+					$border_style = '<' . $bSide;
+					$color = null;
+					foreach ($pieces as $piece) {
+						if (strpos($piece, $bSide) !== false) {
+							$piece = explode('.', $piece);
+							$border_style .= ' style="' . $piece[1] . '"';
+							if (count($piece) === 3) {
+								$color = $piece[2];
+							}
+							break;
+						}
+					}
+					$border_style .= '>';
+					if ($color !== null) {
+						$border_style .= '<color rgb="' . strval($color) . '"/>';
+					}
+					$border_style .= '</' . $bSide . '>';
+					$file->write($border_style);
+				}
 				$file->write(  '<diagonal/>');
 				$file->write('</border>');
 			}

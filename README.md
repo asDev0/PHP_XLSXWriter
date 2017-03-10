@@ -88,10 +88,11 @@ Basic cell styles have been available since version 0.30
 | font       | Arial, Times New Roman, Courier New, Comic Sans MS |
 | font-size  | 8,9,10,11,12 ... |
 | font-style | bold, italic, underline, strikethrough or multiple ie: 'bold,italic' |
-| border     | left, right, top, bottom,   or multiple ie: 'top,left' |
+| border     | left, right, top, bottom,   or multiple ie: 'top,left' 
+|            | or with further options: 'top.thin.#ffffff,right.thick,bottom.dashDot.#ffffff' | 
+|            | possible border styles are: 
+|            | thin / medium / thick / dotted / hair / dashed / mediumDashed / dashDot / mediumDashDot / dashDotDot / mediumDashDotDot / slantDashDot |
 | color      | #RRGGBB, ie: #ff99cc or #f9c |
 | fill       | #RRGGBB, ie: #eeffee or #efe |
 | halign     | general, left, right, justify, center |
 | valign     | bottom, center, distributed |
-
-
