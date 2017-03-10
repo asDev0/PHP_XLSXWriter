@@ -356,6 +356,7 @@ class XLSXWriter
 						$border_value[] = implode('.', [$border_side, $border_style, $border_color]);
 					}
 				}
+				sort($border_value);
 				$style_indexes[$i]['border_idx'] = self::add_to_list_get_index($borders, implode(",", $border_value) );
 			}
 			if (isset($style['fill']) && is_string($style['fill']) && $style['fill'][0]=='#')
